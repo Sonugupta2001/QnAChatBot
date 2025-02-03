@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>Document QA ChatBot</title>
+    <link href="{% static 'material/css/materialize.min.css' %}" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="center-align">Document QA ChatBot</h1>
+        <p>{{ description }}</p>
+
+        {% if messages %}
+            <div class="card-panel teal lighten-4">
+                {% for message in messages %}
+                    <p class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form action="{% url 'upload_document' %}" method="post" enctype="multipart/form-data" class="section">
+            {% csrf_token %}
+            <div class="file-field input-field">
+                <div class="btn">
+                    <span>File</span>
+                    <input type="file" name="document" accept=".pdf" required>
+                </div>
+                <div class="file-path-wrapper">
+                    <input class="file-path validate" type="text" placeholder="Upload your PDF document">
+                </div>
+            </div>
+            <button type="submit" class="btn waves-effect waves-light">Upload</button>
+        </form>
+
+        <form action="{% url 'clear_session' %}" method="post" class="section">
+            {% csrf_token %}
+            <button type="submit" class="btn red lighten-1">Clear Session</button>
+        </form>
+    </div>
+
+    <script src="{% static 'material/js/materialize.min.js' %}"></script>
+</body>
+</html>

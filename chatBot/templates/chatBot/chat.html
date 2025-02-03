@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>Chat with Document QA ChatBot</title>
+    <link href="{% static 'material/css/materialize.min.css' %}" rel="stylesheet">
+    <script>
+        function submitQuery(event) {
+            event.preventDefault();
+            const query = document.getElementById('query').value;
+
+            fetch("{% url 'chat' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `query=${encodeURIComponent(query)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                const chatBox = document.getElementById('chat-box');
+                if (data.error) {
+                    chatBox.innerHTML += `<div class="card-panel red lighten-4"><strong>Error:</strong> ${data.error}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="card-panel"><strong>User:</strong> ${query}</div>`;
+                    chatBox.innerHTML += `<div class="card-panel"><strong>Bot:</strong> ${data.response}</div>`;
+                }
+                document.getElementById('query').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="center-align">Chat with Document QA ChatBot</h1>
+
+        <div id="chat-box" class="card-panel grey lighten-4" style="height: 400px; overflow-y: scroll;">
+            <!-- Chat messages will appear here -->
+        </div>
+
+        <form onsubmit="submitQuery(event)" class="section">
+            {% csrf_token %}
+            <div class="input-field">
+                <input type="text" id="query" name="query" required>
+                <label for="query">Please enter your question</label>
+            </div>
+            <button type="submit" class="btn waves-effect waves-light">Ask</button>
+        </form>
+
+        <a href="{% url 'index' %}" class="btn-flat">Upload another document</a>
+    </div>
+
+    <script src="{% static 'material/js/materialize.min.js' %}"></script>
+</body>
+</html>
