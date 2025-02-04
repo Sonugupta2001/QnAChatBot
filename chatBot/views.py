@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from dotenv import load_dotenv
 
-from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders import PyPDFLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -48,7 +48,6 @@ A chatbot designed to answer questions directly from your uploaded documents
 def index(request):
     return render(request, 'chatbot/index.html', {'description': DESCRIPTION})
 
-
 MEDIA_ROOT = os.path.join(settings.BASE_DIR, 'media')
 
 def upload_document(request):
@@ -59,17 +58,26 @@ def upload_document(request):
             messages.error(request, 'No file uploaded.')
             return redirect('index')
 
-        if not uploaded_file.name.endswith('.pdf'):
-            messages.error(request, 'Only PDF files are supported.')
+        file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+
+        if file_extension not in ['.pdf', '.txt']:
+            messages.error(request, 'Only PDF and TXT files are supported.')
             return redirect('index')
 
         try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=MEDIA_ROOT) as temp_file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension, dir=MEDIA_ROOT) as temp_file:
                 for chunk in uploaded_file.chunks():
                     temp_file.write(chunk)
                 temp_file_path = temp_file.name
 
-            loader = PyPDFLoader(temp_file_path)
+            if file_extension == '.pdf':
+                loader = PyPDFLoader(temp_file_path)
+            elif file_extension == '.txt':
+                loader = TextLoader(temp_file_path)
+            else:
+                messages.error(request, 'Unsupported file type.')
+                return redirect('index')
+
             docs = loader.load()
 
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=200)
